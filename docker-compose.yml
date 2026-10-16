@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nexuspulse-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: nexuspulse
+      POSTGRES_USER: nexuspulse
+      POSTGRES_PASSWORD: nexuspulse
+    ports:
+      - "5432:5432"
+    volumes:
+      - nexuspulse_pgdata:/var/lib/postgresql/data
+volumes:
+  nexuspulse_pgdata:

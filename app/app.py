@@ -1,0 +1,592 @@
+from __future__ import annotations
+
+import os
+import streamlit as st
+
+# Bridge Streamlit Cloud secrets -> environment BEFORE the DB layer is imported,
+# so core.config picks up DB_URL (Neon/Postgres) on deploy. No-op locally.
+try:
+    if "DB_URL" in st.secrets:
+        os.environ["DB_URL"] = st.secrets["DB_URL"]
+except Exception:
+    pass
+
+from datetime import date, timedelta
+from pathlib import Path
+import sys
+import json
+import pandas as pd
+import numpy as np
+import plotly.express as px
+
+try:
+    from streamlit_autorefresh import st_autorefresh
+except Exception:
+    st_autorefresh = None
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from base.prescriptive.recommendations import recommend, parse_drivers
+from core.config import FEATURES, CATEGORICAL
+from core.db import read_sql, exec_sql   # DB-agnostic: SQLite locally, Postgres in the cloud
+from core.notarization import notarize, verify_chain, ledger_tail
+
+METRICS = ROOT / "artifacts" / "model" / "metrics.json"
+FEATURES_CSV = ROOT / "artifacts" / "model_features.csv"
+
+st.set_page_config(page_title="NexusPulse", page_icon="📈",
+                   layout="wide", initial_sidebar_state="expanded")
+
+# ----------------------------------------------------------------- branding
+SKY, SKY_DARK, SKY_LIGHT = "#0EA5E9", "#0369A1", "#7DD3FC"
+SKY_SEQ = ["#0EA5E9", "#0284C7", "#38BDF8", "#0369A1", "#7DD3FC", "#075985"]
+BAND_COLORS = {"Healthy": "#16A34A", "Low": "#16A34A", "Watch": "#F59E0B", "Critical": "#DC2626"}
+
+LOGO = ('<svg width="58" height="58" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">'
+        '<rect x="2" y="2" width="44" height="44" rx="12" fill="#0EA5E9"/>'
+        '<path d="M7 27 L17 27 L21 16 L27 33 L31 24 L41 24" fill="none" stroke="#ffffff" '
+        'stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>')
+
+# ----------------------------------------------------------------- theme
+if "theme" not in st.session_state:
+    st.session_state.theme = "Light"
+
+
+def inject_css(theme: str) -> dict:
+    if theme == "Dark":
+        bg, panel, card, text, border, muted = "#0B1220", "#0F1B2D", "#12203A", "#E2E8F0", "#1E3A5F", "#94A3B8"
+        template = "plotly_dark"
+    else:
+        bg, panel, card, text, border, muted = "#F5FAFF", "#FFFFFF", "#FFFFFF", "#0F172A", "#DBEAFE", "#64748B"
+        template = "plotly_white"
+    st.markdown(f"""
+    <style>
+    [data-testid="stAppViewContainer"] {{ background:{bg}; color:{text}; }}
+    [data-testid="stHeader"] {{ background:transparent; }}
+    [data-testid="stSidebar"], [data-testid="stSidebar"] * {{ color:{text}; }}
+    [data-testid="stSidebar"] {{ background:{panel}; border-right:1px solid {border}; }}
+    .block-container {{ padding-top:1.1rem; }}
+    h1,h2,h3,h4,p,label,span {{ color:{text}; }}
+    .brandbar {{ display:flex; align-items:center; gap:14px; margin-bottom:2px; }}
+    .brandbar > div {{ display:flex; flex-direction:column; justify-content:center; }}
+    .brandbar .title {{ font-size:1.55rem; font-weight:800; line-height:1.1; color:{text}; }}
+    .brandbar .sub {{ font-size:.85rem; color:{muted}; }}
+    .kpi {{ border-radius:14px; padding:14px 16px; background:{card};
+            border:1px solid {border}; border-left:6px solid var(--accent,{SKY}); }}
+    .kpi .lab {{ font-size:.76rem; color:{muted}; margin-bottom:4px; letter-spacing:.02em; }}
+    .kpi .val {{ font-size:1.5rem; font-weight:800; }}
+    .stFormSubmitButton>button, div.stButton>button {{ border-radius:10px; }}
+    .stFormSubmitButton>button *, div.stButton>button * {{ color:#0F172A !important; }}
+    div.stButton>button[kind="primary"] *, .stFormSubmitButton>button[kind="primary"] * {{ color:#ffffff !important; }}
+    .st-key-logincard {{ border:1.5px solid #0EA5E9 !important; border-radius:16px; padding:16px 20px; }}
+    [class*="st-key-sec"] {{ border:1px solid rgba(14,165,233,.55) !important; border-radius:14px; padding:10px 16px; }}
+    .stTabs [data-baseweb="tab-list"], .stTabs [role="tablist"] {{ gap:10px; border-bottom:none !important; }}
+    .stTabs [role="tab"] {{ padding:8px 22px !important; border-radius:14px !important; cursor:pointer; outline:none !important; }}
+    .stTabs [role="tab"]:hover {{ background:rgba(14,165,233,.14); }}
+    .stTabs [role="tab"][data-selected="true"], .stTabs [role="tab"][data-selected] {{ background:rgba(14,165,233,.14) !important; border:2px solid #0EA5E9 !important; border-radius:14px !important; }}
+    .stTabs [role="tab"] > * {{ border-radius:14px !important; }}
+    .stTabs [data-baseweb="tab-highlight"], .stTabs [data-baseweb="tab-border"] {{ display:none !important; }}
+    [data-testid="stToolbar"] svg, [data-testid="stToolbarActions"] svg,
+    [data-testid="stToolbar"] a, [data-testid="stToolbar"] button {{ color:{text} !important; fill:{text} !important; }}
+    </style>""", unsafe_allow_html=True)
+    return {"template": template, "muted": muted}
+
+
+# sidebar top: logo + theme toggle (available before and after login)
+_sidebar_logo = LOGO.replace('width="58" height="58"', 'width="34" height="34"')
+st.sidebar.markdown(
+    f'<div class="brandbar" style="margin-top:-12px;">{_sidebar_logo}'
+    f'<div class="title" style="font-size:1.1rem">NexusPulse</div></div>',
+    unsafe_allow_html=True)
+theme = st.sidebar.radio("Theme", ["Light", "Dark"], horizontal=True,
+                         index=0 if st.session_state.theme == "Light" else 1)
+st.session_state.theme = theme
+THEME = inject_css(theme)
+
+
+def style_fig(fig, h=330):
+    fig.update_layout(template=THEME["template"], height=h, colorway=SKY_SEQ,
+                      margin=dict(l=10, r=10, t=36, b=10),
+                      paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
+    return fig
+
+
+def header():
+    st.markdown(
+        f'<div class="brandbar" style="margin-top:-14px;">{LOGO}<div><div class="title">NexusPulse</div>'
+        f'<div class="sub">Engagement Health, Early-Warning & Revenue Protection</div>'
+        f'</div></div>', unsafe_allow_html=True)
+
+
+# ----------------------------------------------------------------- auth
+def account_manager_ids() -> list[str]:
+    try:
+        d = read_sql("SELECT DISTINCT account_manager_id AS am FROM clients ORDER BY account_manager_id")
+        return d["am"].astype(str).tolist()
+    except Exception:
+        return []
+
+
+ADMIN_PW = "admin123"
+try:
+    ADMIN_PW = st.secrets["auth"]["admin_password"]
+except Exception:
+    pass
+
+AM_PW = "nexus2026"
+try:
+    AM_PW = st.secrets["auth"]["am_password"]
+except Exception:
+    pass
+
+
+def login_gate():
+    if st.session_state.get("auth"):
+        return
+    header()
+    _, mid, _ = st.columns([1, 1.4, 1])
+    box = mid.container(border=True, key="logincard")
+    box.markdown("#### Sign in")
+    role = box.radio("Access level", ["Administrator", "Account Manager", "Guest (view only)"])
+    if role == "Administrator":
+        pw = box.text_input("Admin password", type="password")
+        if box.button("Sign in", type="primary", width="stretch"):
+            if pw == ADMIN_PW:
+                st.session_state.auth = {"role": "Administrator", "am": None, "name": "Nexus Admin"}
+                st.rerun()
+            else:
+                box.error("Incorrect password.")
+    elif role == "Account Manager":
+        am = box.text_input("Your account-manager ID (e.g. AM-001)").strip().upper()
+        pw = box.text_input("Password", type="password")
+        if box.button("Sign in", type="primary", width="stretch"):
+            valid_ids = {a.upper() for a in account_manager_ids()}
+            if not am:
+                box.error("Enter your account-manager ID.")
+            elif am not in valid_ids:
+                box.error("Unrecognized account-manager ID.")
+            elif pw != AM_PW:
+                box.error("Incorrect password.")
+            else:
+                st.session_state.auth = {"role": "Account Manager", "am": am, "name": f"Account Manager {am}"}
+                st.rerun()
+    else:
+        if box.button("Continue as guest", type="primary", width="stretch"):
+            st.session_state.auth = {"role": "Guest", "am": None, "name": "Guest"}
+            st.rerun()
+    st.stop()
+
+
+login_gate()
+AUTH = st.session_state.auth
+CAN_WRITE = AUTH["role"] in ("Administrator", "Account Manager")
+
+# sidebar: signed-in identity + logout
+st.sidebar.divider()
+if AUTH["name"] == AUTH["role"]:
+    st.sidebar.markdown(f"**Signed in**  \n{AUTH['name']}")
+else:
+    st.sidebar.markdown(f"**Signed in**  \n{AUTH['name']}  \n{AUTH['role']}")
+if st.sidebar.button("Log out"):
+    del st.session_state["auth"]
+    st.rerun()
+
+st.sidebar.divider()
+auto = st.sidebar.checkbox("Auto-refresh every 5 min", value=True)
+if auto and st_autorefresh is not None:
+    st_autorefresh(interval=5 * 60 * 1000, key="auto_refresh")
+if st.sidebar.button("Refresh now"):
+    st.cache_data.clear()
+    st.rerun()
+
+
+# ----------------------------------------------------------------- data
+@st.cache_data(ttl=300)
+def portfolio() -> pd.DataFrame:
+    return read_sql("""
+        WITH h AS (
+            SELECT *, ROW_NUMBER() OVER(PARTITION BY engagement_id ORDER BY as_of_date DESC) rn
+            FROM engagement_health
+        ),
+        r AS (
+            SELECT *, ROW_NUMBER() OVER(PARTITION BY engagement_id ORDER BY as_of_date DESC) rn
+            FROM risk_predictions
+        )
+        SELECT h.engagement_id, h.as_of_date, h.behs, h.health_band,
+               h.performance_health, h.client_feedback_health, h.milestone_health,
+               h.utilisation_health, h.sentiment_health,
+               e.client_id, c.client_name, c.industry, c.account_manager_id,
+               e.talent_id, t.talent_name, e.role, e.monthly_contract_value,
+               r.risk_probability, r.risk_band,
+               x.remaining_months, x.contract_exposure, x.risk_adjusted_exposure
+        FROM h
+        JOIN engagements e ON e.engagement_id = h.engagement_id
+        JOIN clients c ON c.client_id = e.client_id
+        JOIN talents t ON t.talent_id = e.talent_id
+        LEFT JOIN r ON r.engagement_id = h.engagement_id AND r.rn = 1
+        LEFT JOIN revenue_exposure x ON x.engagement_id = h.engagement_id
+        WHERE h.rn = 1
+    """)
+
+
+def current_interventions() -> pd.DataFrame:
+    return read_sql("SELECT * FROM interventions ORDER BY intervention_date DESC")
+
+
+def risk_drivers(engagement_id: str) -> tuple[str, str]:
+    """Latest SHAP driver narrative -> (top_drivers, top_driver_detail)."""
+    try:
+        d = read_sql("SELECT top_drivers, top_driver_detail FROM risk_drivers "
+                     "WHERE engagement_id=:eid ORDER BY as_of_date DESC LIMIT 1", eid=engagement_id)
+    except Exception:  # older database without the detail column
+        d = read_sql("SELECT top_drivers FROM risk_drivers WHERE engagement_id=:eid "
+                     "ORDER BY as_of_date DESC LIMIT 1", eid=engagement_id)
+    if not len(d):
+        return "No material driver narrative available.", ""
+    detail = d.iloc[0].get("top_driver_detail", "")
+    return str(d.iloc[0]["top_drivers"]), ("" if pd.isna(detail) else str(detail))
+
+
+@st.cache_resource
+def risk_model():
+    """The selected early-warning pipeline, for model-based what-if scoring."""
+    import joblib
+    meta = json.loads(METRICS.read_text())
+    return joblib.load(ROOT / "artifacts" / "model" / f"{meta['selected_model']}.joblib")
+
+
+@st.cache_data
+def latest_feature_rows() -> pd.DataFrame:
+    f = pd.read_csv(FEATURES_CSV, parse_dates=["as_of_date"])
+    return f.sort_values("as_of_date").groupby("engagement_id").tail(1).set_index("engagement_id")
+
+
+def avg_delay(engagement_id: str) -> float:
+    x = read_sql("SELECT AVG(delay_days) d FROM project_milestones WHERE engagement_id=:eid", eid=engagement_id)
+    return float(x.iloc[0]["d"] or 0)
+
+
+def avg_rating(engagement_id: str) -> float:
+    x = read_sql("SELECT AVG(rating) r FROM client_feedback WHERE engagement_id=:eid", eid=engagement_id)
+    return float(x.iloc[0]["r"] or 5)
+
+
+try:
+    df = portfolio()
+except Exception as exc:
+    header()
+    st.error(str(exc))
+    st.stop()
+
+# role-based access: an account manager sees only their own clients
+if AUTH["role"] == "Account Manager":
+    df = df[df.account_manager_id.astype(str) == AUTH["am"]].copy()
+
+header()
+
+# ----------------------------------------------------------------- filters
+st.sidebar.header("Portfolio filters")
+clients = st.sidebar.multiselect("Client", sorted(df.client_name.unique()), key="Client")
+roles = st.sidebar.multiselect("Role", sorted(df.role.unique()), key="Role")
+industries = st.sidebar.multiselect("Industry", sorted(df.industry.unique()), key="Industry")
+risk_bands = st.sidebar.multiselect("Risk band", ["Low", "Watch", "Critical"], key="Risk band")
+if st.sidebar.button("Reset filters"):
+    for _k in ("Client", "Role", "Industry", "Risk band"):
+        st.session_state.pop(_k, None)
+    st.rerun()
+
+filtered = df.copy()
+if clients:
+    filtered = filtered[filtered.client_name.isin(clients)]
+if roles:
+    filtered = filtered[filtered.role.isin(roles)]
+if industries:
+    filtered = filtered[filtered.industry.isin(industries)]
+if risk_bands:
+    filtered = filtered[filtered.risk_band.isin(risk_bands)]
+
+# ----------------------------------------------------------------- KPIs
+crit = int((filtered.risk_band == "Critical").sum())
+watch = int((filtered.risk_band == "Watch").sum())
+healthy = int((filtered.health_band == "Healthy").sum())
+exposure = float(filtered.risk_adjusted_exposure.fillna(0).sum())
+
+
+def kpi(col, label, value, accent):
+    col.markdown(f'<div class="kpi" style="--accent:{accent}"><div class="lab">{label}</div>'
+                 f'<div class="val" style="color:{accent}">{value}</div></div>', unsafe_allow_html=True)
+
+
+k1, k2, k3, k4, k5 = st.columns(5)
+kpi(k1, "ACTIVE ENGAGEMENTS", f"{len(filtered):,}", SKY)
+kpi(k2, "HEALTHY (BEHS)", f"{healthy:,}", BAND_COLORS["Healthy"])
+kpi(k3, "WATCH RISK", f"{watch:,}", BAND_COLORS["Watch"])
+kpi(k4, "CRITICAL RISK", f"{crit:,}", BAND_COLORS["Critical"])
+kpi(k5, "REVENUE-AT-RISK", f"₦{exposure/1e9:,.2f}B", SKY_DARK)
+
+st.divider()
+row = st.container(border=True, key="sec_toprow")
+left, right = row.columns([1, 1.5])
+
+left.subheader("Portfolio health")
+health = filtered.health_band.value_counts().reindex(["Healthy", "Watch", "Critical"]).fillna(0).reset_index()
+health.columns = ["health_band", "engagements"]
+fig = px.bar(health, x="health_band", y="engagements", text="engagements",
+             color="health_band", color_discrete_map=BAND_COLORS)
+style_fig(fig, 330).update_layout(showlegend=False, xaxis_title=None)
+left.plotly_chart(fig, width="stretch")
+
+right.subheader("Highest-priority engagements")
+top = filtered.sort_values(["risk_probability", "risk_adjusted_exposure"], ascending=False).head(10).copy()
+top["Risk"] = (top.risk_probability.fillna(0) * 100).round(1).astype(str) + "%"
+top["Exposure"] = top.risk_adjusted_exposure.fillna(0).map(lambda x: f"₦{x/1e6:,.2f}M")
+show = top[["engagement_id", "client_name", "role", "risk_band", "Risk", "Exposure"]]
+
+
+def _band_style(v):
+    c = BAND_COLORS.get(v, THEME["muted"])
+    return f"background-color:{c}22; color:{c}; font-weight:700;"
+
+
+try:
+    show = show.style.map(_band_style, subset=["risk_band"])
+except Exception:
+    pass
+right.dataframe(show, width="stretch", hide_index=True)
+
+# ----------------------------------------------------------------- tabs
+portfolio_tab, investigation_tab, interventions_tab, model_tab = st.tabs(
+    ["Portfolio", "Engagement investigation", "Interventions", "Model & governance"])
+
+with portfolio_tab:
+    pf = st.container(border=True, key="sec_portfolio")
+    pf.subheader("Revenue exposure by client")
+    client_exp = (filtered.groupby("client_name", as_index=False)["risk_adjusted_exposure"].sum()
+                  .sort_values("risk_adjusted_exposure", ascending=False).head(15))
+    client_exp["Exposure (₦M)"] = client_exp.risk_adjusted_exposure / 1e6
+    fig = px.bar(client_exp, y="client_name", x="Exposure (₦M)", orientation="h")
+    style_fig(fig, 480).update_layout(yaxis_title=None)
+    pf.plotly_chart(fig, width="stretch")
+
+    pf.subheader("Risk distribution")
+    fig2 = px.histogram(filtered["risk_probability"].fillna(0), nbins=20, labels={"value": "Risk probability"})
+    style_fig(fig2, 330).update_layout(showlegend=False)
+    pf.plotly_chart(fig2, width="stretch")
+
+with investigation_tab:
+    if filtered.empty:
+        st.warning("No engagements match the current filters.")
+    else:
+        selected = st.selectbox("Select engagement", sorted(filtered.engagement_id.unique()))
+        row = filtered[filtered.engagement_id == selected].iloc[0]
+        st.caption(f"{row.talent_name} · {row.role} · {row.client_name} · {row.industry}")
+
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("BEHS", f"{row.behs:.1f}/100")
+        m2.metric("Risk probability", f"{(row.risk_probability or 0)*100:.1f}%")
+        m3.metric("Risk band", str(row.risk_band))
+        m4.metric("Revenue-at-Risk", f"₦{(row.risk_adjusted_exposure or 0)/1e6:,.2f}M")
+
+        trend = read_sql("""
+            SELECT as_of_date, behs, performance_health, client_feedback_health,
+                   milestone_health, utilisation_health, sentiment_health
+            FROM engagement_health WHERE engagement_id=:eid ORDER BY as_of_date
+        """, eid=selected)
+        trend["as_of_date"] = pd.to_datetime(trend["as_of_date"])
+        tlong = trend.melt(id_vars="as_of_date", var_name="metric", value_name="score")
+        fig3 = px.line(tlong, x="as_of_date", y="score", color="metric")
+        style_fig(fig3, 360).update_layout(yaxis_title="Score")
+        st.plotly_chart(fig3, width="stretch")
+
+        drivers_text, drivers_detail = risk_drivers(selected)
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown("### Top risk drivers")
+            st.caption("Ranked by SHAP contribution to the model's risk score (log-odds).")
+            for driver in (drivers_detail or drivers_text).split(" | "):
+                st.markdown(f"- {driver}")
+        with c2:
+            st.markdown("### Recent client feedback")
+            notes = read_sql("""
+                SELECT f.feedback_date, f.rating, f.comment, s.sentiment_label, s.issue_category
+                FROM client_feedback f
+                LEFT JOIN sentiment_scores s
+                  ON f.engagement_id=s.engagement_id AND f.feedback_date=s.source_date
+                WHERE f.engagement_id=:eid ORDER BY f.feedback_date DESC LIMIT 5
+            """, eid=selected)
+            st.dataframe(notes, width="stretch", hide_index=True)
+
+        st.markdown("### AI-assisted intervention recommendation")
+        recs = recommend(
+            risk_probability=float(row.risk_probability or 0), behs=float(row.behs),
+            sentiment_health=float(row.sentiment_health), performance_health=float(row.performance_health),
+            delay_days=avg_delay(selected), feedback_rating=avg_rating(selected),
+            drivers=parse_drivers(drivers_text))
+        for rec in recs:
+            st.markdown(f"**{rec.priority} · {rec.action}** — {rec.reason}  ")
+            st.caption(f"Owner: {rec.owner} · Suggested action window: {rec.due_days} days")
+        st.caption("AI recommendations are decision support only; a manager must review and approve an intervention.")
+
+        st.markdown("### What-if scenario")
+        st.caption("Re-scores the engagement with the live early-warning model after adjusting its "
+                   "latest signals. Scenario simulation only, not a causal estimate.")
+        s1, s2, s3 = st.columns(3)
+        perf_uplift = s1.slider("Performance uplift (points)", -10, 15, 0)
+        sentiment_uplift = s2.slider("Sentiment uplift (points)", -20, 20, 0)
+        delay_reduction = s3.slider("Reduce average delay (days)", 0, 10, 0)
+        base_risk = float(row.risk_probability or 0)
+        try:
+            x = latest_feature_rows().loc[[selected]].copy()
+            base_risk = float(risk_model().predict_proba(x[FEATURES + CATEGORICAL])[:, 1][0])
+            for col, delta in (("performance_health", perf_uplift), ("sentiment_health", sentiment_uplift)):
+                new = (x[col] + delta).clip(0, 100)
+                x[f"{col}_delta"] += new - x[col]
+                x[col] = new
+            # Milestone health falls ~5 points per day of delay (its definition in the
+            # data), so a delay reduction is applied through milestone health, capped by
+            # the delay actually present.
+            cut = min(float(delay_reduction), float(x["delay_days"].iloc[0]))
+            new_mh = (x["milestone_health"] + 5 * cut).clip(0, 100)
+            x["milestone_health_delta"] += new_mh - x["milestone_health"]
+            x["milestone_health"] = new_mh
+            scenario_risk = float(risk_model().predict_proba(x[FEATURES + CATEGORICAL])[:, 1][0])
+            method = "Model re-score (Logistic Regression pipeline)"
+        except Exception:
+            base_score = float(row.behs)
+            scenario_behs = np.clip(base_score + 0.25*perf_uplift + 0.20*sentiment_uplift + 1.2*delay_reduction, 0, 100)
+            scenario_risk = float(np.clip(base_risk - 0.006*(scenario_behs-base_score), 0.01, 0.99))
+            method = "Heuristic approximation (model features unavailable)"
+        w1, w2 = st.columns(2)
+        w1.metric("Current model risk", f"{base_risk*100:.1f}%")
+        w2.metric("Scenario risk", f"{scenario_risk*100:.1f}%", delta=f"{(scenario_risk-base_risk)*100:+.1f} pp",
+                  delta_color="inverse")
+        st.caption(f"Method: {method}")
+
+with interventions_tab:
+    if not CAN_WRITE:
+        st.info("View-only access. Sign in as an Administrator or an Account Manager to log interventions.")
+    else:
+        st.subheader("Log an intervention")
+        candidates = sorted(filtered.engagement_id.unique()) if len(filtered) else sorted(df.engagement_id.unique())
+        if candidates:
+            selected_i = st.selectbox("Engagement", candidates, key="intervention_engagement")
+            rrow = df[df.engagement_id == selected_i].iloc[0]
+            recs = recommend(
+                risk_probability=float(rrow.risk_probability or 0), behs=float(rrow.behs),
+                sentiment_health=float(rrow.sentiment_health), performance_health=float(rrow.performance_health),
+                delay_days=avg_delay(selected_i), feedback_rating=avg_rating(selected_i),
+                drivers=parse_drivers(risk_drivers(selected_i)[0]))
+            action_options = [r.action for r in recs] + ["Mentoring", "Escalation", "Scope clarification"]
+            with st.form("intervention_form"):
+                a, b, c = st.columns(3)
+                itype = a.selectbox("Intervention type", list(dict.fromkeys(action_options)))
+                owner = b.text_input("Owner", AUTH["name"])
+                priority = c.selectbox("Priority", ["High", "Medium", "Low"])
+                due_days = st.number_input("Due within (days)", 1, 60, 7)
+                notes = st.text_area("Action notes", "")
+                submitted = st.form_submit_button("Log intervention", type="primary")
+            if submitted:
+                _today = date.today()
+                exec_sql("""
+                    INSERT INTO interventions
+                    (engagement_id, intervention_date, intervention_type, owner, priority, status, due_date, completed_date, outcome)
+                    VALUES (:eid, :today, :itype, :owner, :priority, 'Open', :due, NULL, :notes)
+                """, eid=selected_i, today=str(_today), itype=itype, owner=owner,
+                     priority=priority, due=str(_today + timedelta(days=int(due_days))), notes=notes)
+                notarize("intervention_logged", selected_i, {
+                    "intervention_type": itype, "owner": owner, "priority": priority,
+                    "due_date": str(_today + timedelta(days=int(due_days))), "notes": notes})
+                st.cache_data.clear()
+                st.success("Intervention logged to the SQL database and notarized in the governance ledger.")
+
+    st.subheader("Intervention register")
+    ints = current_interventions()
+    if len(ints):
+        st.dataframe(ints, width="stretch", hide_index=True)
+        if CAN_WRITE and "intervention_id" in ints.columns:
+            open_ids = ints.loc[ints.status.eq("Open"), "intervention_id"].tolist()
+            if open_ids:
+                st.markdown("### Close an intervention")
+                iid = st.selectbox("Open intervention", open_ids)
+                outcome = st.selectbox("Outcome", ["Risk reduced", "Risk unchanged", "Escalated", "Client renewed", "Other"])
+                note = st.text_input("Outcome note", "")
+                if st.button("Mark completed"):
+                    exec_sql("UPDATE interventions SET status='Closed', completed_date=:cd, outcome=:oc WHERE intervention_id=:iid",
+                             cd=str(date.today()), oc=f"{outcome}: {note}", iid=int(iid))
+                    notarize("intervention_closed", str(int(iid)), {"outcome": outcome, "note": note,
+                              "completed_date": str(date.today())})
+                    st.cache_data.clear()
+                    st.success("Intervention closed, outcome recorded, and notarized in the governance ledger.")
+                    st.rerun()
+    else:
+        st.caption("No interventions recorded yet.")
+
+with model_tab:
+    st.subheader("Model performance")
+    if METRICS.exists():
+        metrics = json.loads(METRICS.read_text())
+        mdf = pd.DataFrame([
+            {"Model": name, "Precision": vals["precision"], "Recall": vals["recall"],
+             "F1": vals["f1"], "ROC-AUC": vals["roc_auc"]}
+            for name, vals in metrics["results"].items()])
+        st.dataframe(mdf.style.format({c: "{:.3f}" for c in mdf.columns if c != "Model"}),
+                     width="stretch", hide_index=True)
+        selected_model = metrics["selected_model"]
+        st.success(f"Primary early-warning model: {selected_model.replace('_', ' ').title()} · "
+                   f"intervention threshold = {metrics['band_threshold']:.2f}")
+        rob = metrics.get("robustness")
+        if rob:
+            st.markdown(
+                f"**Robustness check ({rob['n_clients']} clients, 5-fold grouped by client):** "
+                f"recall {rob['recall']['mean']:.3f} ± {rob['recall']['std']:.3f} · "
+                f"ROC-AUC {rob['roc_auc']['mean']:.3f} ± {rob['roc_auc']['std']:.3f}. "
+                "No client appears in both training and test folds, so the result does not depend "
+                "on the model having seen a client before.")
+        st.markdown(f"**Critical interpretation:** {selected_model.replace('_', ' ').title()} is selected "
+                    "because recall is prioritised for early warning, catching an at-risk engagement matters "
+                    "more than an occasional false alarm. The precision-recall trade-off is stated openly, not hidden.")
+
+    st.subheader("Governance checklist")
+    st.checkbox("Human review required before intervention", value=True, disabled=True)
+    st.checkbox("Role-based access (admin / account manager / guest)", value=True, disabled=True)
+    st.checkbox("Synthetic academic data / no confidential client records", value=True, disabled=True)
+    st.checkbox("Temporal leakage controls applied in modelling", value=True, disabled=True)
+    st.checkbox("Every prediction, intervention and outcome is hash-chained and tamper-evident", value=True, disabled=True)
+
+    st.subheader("Data quality scorecard")
+    st.caption("Completeness · validity · uniqueness · freshness, the four dimensions from Data Governance.")
+    try:
+        from core.data_quality_scorecard import scorecard, grade
+        sc = scorecard()
+        cols = st.columns(len(sc))
+        for col, (dim, val) in zip(cols, sc.items()):
+            col.metric(dim.title(), f"{val*100:.1f}%", grade(val))
+        from core.data_quality_scorecard import rule_results
+        rules = rule_results()
+        if len(rules):
+            with st.expander(f"Validity & uniqueness rules ({len(rules)} checks, "
+                             f"{int((rules.rows_failed > 0).sum())} with failures)"):
+                st.dataframe(rules, width="stretch", hide_index=True)
+    except Exception as e:
+        st.caption(f"Data-quality scorecard unavailable: {e}")
+
+    st.subheader("Decision notarization ledger")
+    st.caption("Blockchain-inspired audit trail: every model run, intervention and outcome is SHA-256 "
+               "hash-chained to the record before it. Altering or deleting a past row breaks every hash "
+               "after it; verifiable on demand, not just claimed.")
+    lc1, lc2 = st.columns([1, 3])
+    if lc1.button("Verify chain integrity"):
+        result = verify_chain()
+        if result["ok"]:
+            lc2.success(f"\u2713 Verified, {result['checked']} records checked, chain intact end-to-end.")
+        else:
+            lc2.error(f"\u2717 Chain broken at ledger #{result['broken_at']} , tampering or corruption detected.")
+    ledger_df = ledger_tail(12)
+    if len(ledger_df):
+        show_ledger = ledger_df.copy()
+        show_ledger["record_hash"] = show_ledger["record_hash"].astype(str).str[:16] + "…"
+        st.dataframe(show_ledger, width="stretch", hide_index=True)
+    else:
+        st.caption("Ledger is empty, run the pipeline or log an intervention to notarize the first record.")

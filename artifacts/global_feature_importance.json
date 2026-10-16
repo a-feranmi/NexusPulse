@@ -1,0 +1,34 @@
+[
+  {
+    "driver": "Client feedback",
+    "mean_abs_shap": 1.0246316222341476
+  },
+  {
+    "driver": "Performance",
+    "mean_abs_shap": 0.8716724478658618
+  },
+  {
+    "driver": "Sentiment",
+    "mean_abs_shap": 0.7593378741167708
+  },
+  {
+    "driver": "Role profile",
+    "mean_abs_shap": 0.2534651591487404
+  },
+  {
+    "driver": "Contract stage",
+    "mean_abs_shap": 0.24316476325661307
+  },
+  {
+    "driver": "Milestone delivery",
+    "mean_abs_shap": 0.21883038386579487
+  },
+  {
+    "driver": "Utilisation",
+    "mean_abs_shap": 0.13071115138247866
+  },
+  {
+    "driver": "Contract value",
+    "mean_abs_shap": 0.06785990337852052
+  }
+]

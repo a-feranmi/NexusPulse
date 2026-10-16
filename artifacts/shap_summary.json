@@ -1,0 +1,81 @@
+{
+  "model": "logistic_regression",
+  "n_observations": 9544,
+  "top_features": [
+    {
+      "feature": "client_feedback_health_delta",
+      "raw_feature": "client_feedback_health_delta",
+      "mean_abs_shap": 0.6049325310234616
+    },
+    {
+      "feature": "performance_health",
+      "raw_feature": "performance_health",
+      "mean_abs_shap": 0.584515983488767
+    },
+    {
+      "feature": "sentiment_health",
+      "raw_feature": "sentiment_health",
+      "mean_abs_shap": 0.5600125397466041
+    },
+    {
+      "feature": "performance_health_delta",
+      "raw_feature": "performance_health_delta",
+      "mean_abs_shap": 0.4456237777805057
+    },
+    {
+      "feature": "engagement_age_months",
+      "raw_feature": "engagement_age_months",
+      "mean_abs_shap": 0.3590228164613422
+    },
+    {
+      "feature": "sentiment_health_delta",
+      "raw_feature": "sentiment_health_delta",
+      "mean_abs_shap": 0.3059738836103829
+    },
+    {
+      "feature": "feedback_rating",
+      "raw_feature": "feedback_rating",
+      "mean_abs_shap": 0.3011202911413142
+    },
+    {
+      "feature": "client_feedback_health",
+      "raw_feature": "client_feedback_health",
+      "mean_abs_shap": 0.2964491865607001
+    },
+    {
+      "feature": "milestone_health_delta",
+      "raw_feature": "milestone_health_delta",
+      "mean_abs_shap": 0.1659495106298106
+    },
+    {
+      "feature": "role_BI Developer",
+      "raw_feature": "role",
+      "mean_abs_shap": 0.16528719122366797
+    },
+    {
+      "feature": "remaining_months",
+      "raw_feature": "remaining_months",
+      "mean_abs_shap": 0.1610374956402258
+    },
+    {
+      "feature": "role_Analytics Engineer",
+      "raw_feature": "role",
+      "mean_abs_shap": 0.15820462656982606
+    },
+    {
+      "feature": "utilisation",
+      "raw_feature": "utilisation",
+      "mean_abs_shap": 0.09515424745847353
+    },
+    {
+      "feature": "role_AI Engineer",
+      "raw_feature": "role",
+      "mean_abs_shap": 0.08784335739186235
+    },
+    {
+      "feature": "milestone_health",
+      "raw_feature": "milestone_health",
+      "mean_abs_shap": 0.07119262606303908
+    }
+  ]
+}
