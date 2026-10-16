@@ -1,8 +1,8 @@
-# BredgePulse: Business Diagnostic Evidence
+# NexusPulse: Business Diagnostic Evidence
 
 > All values below are generated from the synthetic academic dataset and must be labelled
 > as such in the MSc presentation. They demonstrate the analytical method; they are not
-> claims about Bredge's actual portfolio.
+> claims about Nexus's actual portfolio.
 
 ## Portfolio snapshot
 - 1,200 engagements across 60 clients in the synthetic portfolio.

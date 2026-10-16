@@ -1,0 +1,69 @@
+warning: in the working copy of '.env.example', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.gitignore', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'LICENSE', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'Makefile', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/app.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'app/run.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'base/explainability/risk_drivers.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'base/explainability/shap_explain.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'base/features/build_features.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'base/models/README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'base/models/predict_all.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'base/models/train_risk_model.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'base/nlp/README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'base/nlp/score_feedback.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'base/prescriptive/recommendations.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'base/scoring/behs.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'core/config.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'core/db.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'core/notarization.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'data/generate_synthetic.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'data/synthetic/manifest.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'database/marts/analytics_views.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'database/marts/analytics_views_sqlite.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'database/schema/schema.sql', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docker-compose.yml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/architecture.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/business_case.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/case_study.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/data_dictionary.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/data_insights.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/governance.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/mapping.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/methodology.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/model_card.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'eda_report.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'etl/README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'etl/data_quality.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'etl/export_powerbi.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'etl/load.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'etl/persist_model_outputs.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'etl/seed_demo_interventions.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'requirements.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'run_all.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'scripts_start.sh', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/conftest.py', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/test_pipeline.py', LF will be replaced by CRLF the next time Git touches it
+ .env.example           |  4 [32m++[m[31m--[m
+ .gitignore             |  2 [32m+[m[31m-[m
+ Makefile               |  2 [32m+[m[31m-[m
+ README.md              | 32 [32m++++++++++++++++[m[31m----------------[m
+ app/app.py             | 10 [32m+++++[m[31m-----[m
+ base/scoring/behs.py   |  2 [32m+[m[31m-[m
+ core/config.py         |  6 [32m+++[m[31m---[m
+ core/notarization.py   |  2 [32m+[m[31m-[m
+ docker-compose.yml     | 12 [32m++++++[m[31m------[m
+ docs/architecture.md   |  4 [32m++[m[31m--[m
+ docs/business_case.md  |  6 [32m+++[m[31m---[m
+ docs/case_study.md     | 10 [32m+++++[m[31m-----[m
+ docs/data_insights.md  |  4 [32m++[m[31m--[m
+ docs/governance.md     |  6 [32m+++[m[31m---[m
+ docs/mapping.md        |  6 [32m+++[m[31m---[m
+ docs/methodology.md    |  2 [32m+[m[31m-[m
+ docs/model_card.md     |  2 [32m+[m[31m-[m
+ eda_report.py          |  4 [32m++[m[31m--[m
+ run_all.py             |  4 [32m++[m[31m--[m
+ tests/conftest.py      |  2 [32m+[m[31m-[m
+ tests/test_pipeline.py |  2 [32m+[m[31m-[m
+ 21 files changed, 62 insertions(+), 62 deletions(-)

@@ -12,5 +12,5 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-_TMP = Path(tempfile.mkdtemp(prefix="bredgepulse_test_"))
+_TMP = Path(tempfile.mkdtemp(prefix="nexuspulse_test_"))
 os.environ["DB_URL"] = f"sqlite:///{_TMP / 'test.sqlite'}"

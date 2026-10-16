@@ -1,10 +1,10 @@
-# BredgePulse Architecture
+# NexusPulse Architecture
 
 ## Implemented (MVP)
 
 ```mermaid
 flowchart LR
-  A[Bredge operational sources\nTalent • Client • Engagement • Performance • Feedback • Milestones • Timesheets] --> B[ETL + data quality\nLoad • 41 validity & uniqueness rules • scorecard]
+  A[Nexus operational sources\nTalent • Client • Engagement • Performance • Feedback • Milestones • Timesheets] --> B[ETL + data quality\nLoad • 41 validity & uniqueness rules • scorecard]
   B --> C[(SQLite local / PostgreSQL cloud\ncore entities → monthly signals → analytics views)]
   C --> D[Descriptive & diagnostic analytics\nBEHS • trends • root cause • revenue exposure]
   C --> E[ML / AI\nRisk model • domain-adapted NLP • grouped SHAP • recommendations]

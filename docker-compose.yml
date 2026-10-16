@@ -1,15 +1,15 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: bredgepulse-postgres
+    container_name: nexuspulse-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: bredgepulse
-      POSTGRES_USER: bredgepulse
-      POSTGRES_PASSWORD: bredgepulse
+      POSTGRES_DB: nexuspulse
+      POSTGRES_USER: nexuspulse
+      POSTGRES_PASSWORD: nexuspulse
     ports:
       - "5432:5432"
     volumes:
-      - bredgepulse_pgdata:/var/lib/postgresql/data
+      - nexuspulse_pgdata:/var/lib/postgresql/data
 volumes:
-  bredgepulse_pgdata:
+  nexuspulse_pgdata:

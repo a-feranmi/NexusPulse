@@ -1,4 +1,4 @@
-# BredgePulse Model Card
+# NexusPulse Model Card
 
 ## Objective
 Predict whether an engagement will terminate early within the next 90 days, using only

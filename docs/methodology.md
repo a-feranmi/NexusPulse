@@ -1,4 +1,4 @@
-# BredgePulse Methodology
+# NexusPulse Methodology
 
 ## Strategic
 - SWOT / selective PESTLE for context

@@ -4,7 +4,7 @@ import sqlite3
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
-DB = ROOT / "artifacts" / "bredgepulse.sqlite"
+DB = ROOT / "artifacts" / "nexuspulse.sqlite"
 
 
 def test_core_tables_have_rows():

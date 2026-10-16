@@ -1,15 +1,15 @@
-# BredgePulse — Portfolio Case Study
+# NexusPulse — Portfolio Case Study
 
 ## Problem
-Bredge-inspired placement operations generate multiple engagement-health signals, but those signals are difficult to combine into one timely decision. The strategic gap is therefore not data availability; it is the absence of an integrated predictive engagement-risk capability.
+Nexus-inspired placement operations generate multiple engagement-health signals, but those signals are difficult to combine into one timely decision. The strategic gap is therefore not data availability; it is the absence of an integrated predictive engagement-risk capability.
 
 ## Strategic intervention
-BredgePulse is a governed decision-intelligence platform that moves the operating model from reactive issue discovery to proactive intervention:
+NexusPulse is a governed decision-intelligence platform that moves the operating model from reactive issue discovery to proactive intervention:
 
 **Monitor → Diagnose → Predict → Explain → Recommend → Intervene → Measure**
 
 ## Technical architecture
-Structured and unstructured operational sources feed a Python ETL pipeline and PostgreSQL-ready data model. The analytics layer calculates the Bredge Engagement Health Score (BEHS), while the ML/AI layer predicts next-90-day deterioration, analyses feedback sentiment/issues, explains model drivers and generates human-reviewed intervention recommendations. Power BI provides executive intelligence; Streamlit provides operational decision support.
+Structured and unstructured operational sources feed a Python ETL pipeline and PostgreSQL-ready data model. The analytics layer calculates the Nexus Engagement Health Score (BEHS), while the ML/AI layer predicts next-90-day deterioration, analyses feedback sentiment/issues, explains model drivers and generates human-reviewed intervention recommendations. Power BI provides executive intelligence; Streamlit provides operational decision support.
 
 ## Data science
 - Grouped temporal holdout (whole engagements, newest 25%) so no engagement appears in both train and test.
@@ -29,4 +29,4 @@ The executive layer translates predictive risk into **risk-adjusted revenue expo
 This creates a common language between data science and commercial management without claiming guaranteed revenue loss.
 
 ## Portfolio disclaimer
-All data in this project are synthetic and generated for academic demonstration using a Bredge-inspired operating model. The metrics illustrate the proposed methodology and are not claims about actual Bredge performance.
+All data in this project are synthetic and generated for academic demonstration using a Nexus-inspired operating model. The metrics illustrate the proposed methodology and are not claims about actual Nexus performance.

@@ -1,4 +1,4 @@
-# BredgePulse — Data Governance (Module 7)
+# NexusPulse — Data Governance (Module 7)
 
 Most portfolio projects at this stage stop at a dashboard and an app. This
 project also implements the four Module 7 topics directly, not just as
@@ -13,8 +13,8 @@ slide-ware but as running code:
 
 ## Why a hash chain, not "real" blockchain
 
-A public/distributed blockchain solves a problem BredgePulse doesn't have
-trust between *mutually distrusting parties with no shared database*. Bredge
+A public/distributed blockchain solves a problem NexusPulse doesn't have
+trust between *mutually distrusting parties with no shared database*. Nexus
 has one database and one accountable governance owner. What that owner
 actually needs is **proof that no one, including an administrator quietly
 edited a past prediction, intervention record or outcome.** A hash chain

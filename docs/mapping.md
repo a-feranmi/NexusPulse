@@ -1,6 +1,6 @@
 # Mapping
 
-| Required assessment area | BredgePulse evidence |
+| Required assessment area | NexusPulse evidence |
 |---|---|
 | 1. Executive Summary | Strategic gap, intervention, expected business value |
 | 2. Strategic Approach | Descriptive -> Diagnostic -> Predictive -> Prescriptive; CRISP-DM |
@@ -25,7 +25,7 @@ documented in `docs/architecture.md`, not built.
 | Text Detection & Recognition; NLP | Domain-adapted VADER sentiment, issue taxonomy on concern comments | Implemented |
 | Cloud Solutions | Streamlit Community Cloud app, Neon PostgreSQL, Power BI Service | Implemented |
 | R and Python; Libraries for Data Science | Python: pandas, NumPy, scikit-learn, SHAP, VADER, SQLAlchemy, Plotly, Streamlit | Implemented |
-| Jupyter Notebook; Anaconda & Google Colab | `notebooks/01_bredgepulse_walkthrough.ipynb` with an Open-in-Colab badge | Implemented |
+| Jupyter Notebook; Anaconda & Google Colab | `notebooks/01_nexuspulse_walkthrough.ipynb` with an Open-in-Colab badge | Implemented |
 | MongoDB & NoSQL; Distributed Architectures; Hadoop/Hive/Spark; Elasticsearch; Kafka; InfluxDB | Production scale-out path | Roadmap |
 | Neural Networks, LLM & Modern AI | Human-reviewed LLM summarisation of check-in notes | Roadmap |
 | Data Management & Visualization; Data Presentation (Power BI) | Five-page Power BI report, Streamlit dashboards, notebook charts | Implemented |
@@ -35,4 +35,4 @@ documented in `docs/architecture.md`, not built.
 | Agile Scrum | Quarterly releases delivered in two-week sprints | Plan |
 
 ## Critical wording
-Use **risk-adjusted revenue exposure** or **Revenue-at-Risk estimate**, not guaranteed revenue loss. The model is trained and evaluated on a synthetic academic dataset; results are not claims about actual Bredge performance.
+Use **risk-adjusted revenue exposure** or **Revenue-at-Risk estimate**, not guaranteed revenue loss. The model is trained and evaluated on a synthetic academic dataset; results are not claims about actual Nexus performance.

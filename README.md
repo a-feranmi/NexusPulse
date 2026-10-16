@@ -1,11 +1,11 @@
-# BredgePulse
+# NexusPulse
 ### Engagement Health, Early-Warning & Revenue Protection Platform
-*Bredge LLC · MSc Data Science Management; strategic intervention & portfolio project*
+*Nexus · MSc Data Science Management; strategic intervention*
 
-**Live demo:**  [Web app](https://bredgepulse.streamlit.app/)  ·  [Power BI dashboard](https://app.powerbi.com/view?r=eyJrIjoiYWVmOGZhOTMtZTY0YS00MmYyLTlkZTctN2VjNGQ5YjQ3ZTEzIiwidCI6IjE0NWVhMmM0LTQ0NWYtNDdhOC05N2E3LWQ4MjdhYjk4ZTE0ZCJ9)
+**Live demo:**  [Web app](https://nexuspulse.streamlit.app/)  ·  [Power BI dashboard](https://app.powerbi.com/view?r=eyJrIjoiZjMyZDYzODMtY2I2MC00ZTFmLThhZTYtMjJhNDBlMDI1OGU2IiwidCI6IjE0NWVhMmM0LTQ0NWYtNDdhOC05N2E3LWQ4MjdhYjk4ZTE0ZCJ9)  ·  
 
 
-> All data is fully synthetic and Bredge-inspired. No confidential client data is used.
+> All data is fully synthetic and Nexus-inspired. No confidential client data is used.
 
 **Access:** the web app is role-gated (Administrator, Account Manager, Guest). If you'd like to explore it as an Administrator or Account Manager, reach out to me at **ample.oluwaferanmi26@gmail.com** for credentials.
 
@@ -13,17 +13,17 @@
 
 ## Overview
 
-Bredge LLC places data and technology talent with client organisations. But once a
+Nexus places data and technology talent with client organisations. But once a
 consultant is deployed, the **health of that placement is largely invisible** to the
-business; Bredge typically only learns an engagement is failing when the client
+business; Nexus typically only learns an engagement is failing when the client
 terminates the contract. By then the recurring revenue is already lost, the consultant
 is unexpectedly on the bench, and the client relationship is damaged.
 
-The underlying problem is not a lack of data. Bredge has performance reviews, client
+The underlying problem is not a lack of data. Nexus has performance reviews, client
 feedback, project milestones, timesheets, check-in notes and contract information, but
 these signals live apart and never combine into a single, timely decision.
 
-**BredgePulse** closes that gap. It integrates those fragmented signals into one
+**NexusPulse** closes that gap. It integrates those fragmented signals into one
 governed decision-intelligence platform that detects deteriorating engagements early,
 explains *why* they are at risk, recommends a human-reviewed intervention, and quantifies
 the financial exposure attached to the risk turning placement management from a
@@ -37,9 +37,9 @@ DATA  →  INSIGHT  →  PREDICTION  →  EXPLANATION  →  ACTION  →  OUTCOME
 
 ## What it does
 
-BredgePulse delivers a complete management cycle:
+NexusPulse delivers a complete management cycle:
 
-- **Health monitoring:** A transparent Bredge Engagement Health Score (BEHS) bands every
+- **Health monitoring:** A transparent Nexus Engagement Health Score (BEHS) bands every
   active placement as Healthy, Watch or Critical.
 - **Early-warning prediction:** A machine-learning model estimates the probability that an
   engagement will terminate early within the next 90 days.
@@ -58,7 +58,7 @@ BredgePulse delivers a complete management cycle:
 
 An end-to-end, reproducible platform:
 
-- **Synthetic data engine:** Generates a realistic Bredge-inspired dataset (clients,
+- **Synthetic data engine:** Generates a realistic Nexus-inspired dataset (clients,
   talents, engagements and ~9.5k monthly signal records) with latent health trajectories
   that drive correlated signals and outcomes.
 - **Database:** A relational schema (core entities → monthly signals → analytics layer)
@@ -84,7 +84,7 @@ An end-to-end, reproducible platform:
 - **Streamlit application:** An operational workspace to monitor the portfolio,
   investigate an engagement, re-score what-if scenarios with the live model, and log
   interventions.
-- **Jupyter walkthrough:** `notebooks/01_bredgepulse_walkthrough.ipynb` runs the
+- **Jupyter walkthrough:** `notebooks/01_nexuspulse_walkthrough.ipynb` runs the
   analysis end to end from the committed artifacts, in Jupyter, Anaconda or Google Colab.
 
 ---
@@ -92,7 +92,7 @@ An end-to-end, reproducible platform:
 ## Architecture
 
 ```
-                         SYNTHETIC BREDGE SOURCES
+                         SYNTHETIC NEXUS SOURCES
      performance · client feedback · milestones · timesheets · check-in notes · contracts
                                    │
                                    ▼
@@ -180,7 +180,7 @@ Set `DB_URL` (see `.env.example`) to build into PostgreSQL instead. A full build
 ## Project structure
 
 ```
-BredgePulse/
+NexusPulse/
 ├── core/            configuration + one database engine (SQLite / Postgres)
 ├── data/            synthetic data generator + generated CSVs
 ├── database/        schema + analytics marts (views)
@@ -218,6 +218,6 @@ limitations of the hash-chain approach.
 
 ## Data & confidentiality
 
-The dataset is synthetic and generated for academic demonstration using a Bredge-inspired
-operating model. It contains no confidential Bredge or client information; realism of the
+The dataset is synthetic and generated for academic demonstration using a Nexus-inspired
+operating model. It contains no confidential Nexus or client information; realism of the
 *patterns* (deteriorating engagements leading to churn) matters more than scale.

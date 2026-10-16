@@ -1,4 +1,4 @@
-"""Bredge Engagement Health Score (BEHS).
+"""Nexus Engagement Health Score (BEHS).
 
 Weights are management-defined MVP weights and are not presented as empirically
 validated causal weights.

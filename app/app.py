@@ -36,7 +36,7 @@ from core.notarization import notarize, verify_chain, ledger_tail
 METRICS = ROOT / "artifacts" / "model" / "metrics.json"
 FEATURES_CSV = ROOT / "artifacts" / "model_features.csv"
 
-st.set_page_config(page_title="BredgePulse", page_icon="📈",
+st.set_page_config(page_title="NexusPulse", page_icon="📈",
                    layout="wide", initial_sidebar_state="expanded")
 
 # ----------------------------------------------------------------- branding
@@ -98,7 +98,7 @@ def inject_css(theme: str) -> dict:
 _sidebar_logo = LOGO.replace('width="58" height="58"', 'width="34" height="34"')
 st.sidebar.markdown(
     f'<div class="brandbar" style="margin-top:-12px;">{_sidebar_logo}'
-    f'<div class="title" style="font-size:1.1rem">BredgePulse</div></div>',
+    f'<div class="title" style="font-size:1.1rem">NexusPulse</div></div>',
     unsafe_allow_html=True)
 theme = st.sidebar.radio("Theme", ["Light", "Dark"], horizontal=True,
                          index=0 if st.session_state.theme == "Light" else 1)
@@ -115,7 +115,7 @@ def style_fig(fig, h=330):
 
 def header():
     st.markdown(
-        f'<div class="brandbar" style="margin-top:-14px;">{LOGO}<div><div class="title">BredgePulse</div>'
+        f'<div class="brandbar" style="margin-top:-14px;">{LOGO}<div><div class="title">NexusPulse</div>'
         f'<div class="sub">Engagement Health, Early-Warning & Revenue Protection</div>'
         f'</div></div>', unsafe_allow_html=True)
 
@@ -135,7 +135,7 @@ try:
 except Exception:
     pass
 
-AM_PW = "bredge2026"
+AM_PW = "nexus2026"
 try:
     AM_PW = st.secrets["auth"]["am_password"]
 except Exception:
@@ -154,7 +154,7 @@ def login_gate():
         pw = box.text_input("Admin password", type="password")
         if box.button("Sign in", type="primary", width="stretch"):
             if pw == ADMIN_PW:
-                st.session_state.auth = {"role": "Administrator", "am": None, "name": "Bredge Admin"}
+                st.session_state.auth = {"role": "Administrator", "am": None, "name": "Nexus Admin"}
                 st.rerun()
             else:
                 box.error("Incorrect password.")
