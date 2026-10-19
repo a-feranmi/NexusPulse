@@ -39,6 +39,27 @@ FEATURES_CSV = ROOT / "artifacts" / "model_features.csv"
 st.set_page_config(page_title="NexusPulse", page_icon="📈",
                    layout="wide", initial_sidebar_state="expanded")
 
+# ------------------------------------------------- legacy-URL redirect
+# The app used to live at the old "bredgepulse" subdomain. If this code is
+# served from that host, send visitors to the new URL instead of the app.
+NEW_APP_URL = "https://nexuspulse.streamlit.app/"
+try:
+    _host = (st.context.headers.get("Host") or "").lower()
+except Exception:
+    _host = ""
+if "bredgepulse" in _host:
+    import streamlit.components.v1 as components
+    st.title("BredgePulse is now NexusPulse")
+    st.write("This app has moved. You are being redirected to the new address.")
+    st.link_button("Open NexusPulse", NEW_APP_URL, type="primary")
+    components.html(
+        f'<meta http-equiv="refresh" content="0; url={NEW_APP_URL}">'
+        f'<script>try{{window.top.location.replace("{NEW_APP_URL}")}}'
+        f'catch(e){{window.location.replace("{NEW_APP_URL}")}}</script>',
+        height=0,
+    )
+    st.stop()
+
 # ----------------------------------------------------------------- branding
 SKY, SKY_DARK, SKY_LIGHT = "#0EA5E9", "#0369A1", "#7DD3FC"
 SKY_SEQ = ["#0EA5E9", "#0284C7", "#38BDF8", "#0369A1", "#7DD3FC", "#075985"]
